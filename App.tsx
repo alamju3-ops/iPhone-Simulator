@@ -1,163 +1,55 @@
-import React, { useState, createContext, useContext } from 'react';
-import { View, Text, Pressable, TextInput } from 'react-native';
-import { ThemeProvider, useT, T, Screen, Scroll, Header, NavBar, Card, Group, Row, Button, Segmented, Chip, Pill, Avatar, Toggle, TabBar, Tabs, Stack, Icon, Spacer, SectionTitle, SearchBar, alpha } from './ui/kit';
+import React, { useState } from 'react';
+import { StatusBar, SafeAreaView, View, Text, Pressable, TextInput, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-const ACCENT = '#3B82F6';
-const THEME = { dark: { bg: '#07090F', card: '#10141D', card2: '#19202C', line: '#1D2531', text2: '#93A0B4', text3: '#59657A' }, light: { bg: '#F1F4FA', card: '#FFFFFF', card2: '#E1E7F2' } };
-const PEOPLE = {
-  sam: { name: 'Sam Ortiz', c: '#F59E42', online: true },
-  lena: { name: 'Lena Park', c: '#A78BFA', online: true },
-  noah: { name: 'Noah Reed', c: '#22C55E', online: false },
-  ava: { name: 'Ava Chen', c: '#FF6B9D', online: false },
-  team: { name: 'Design team', c: '#3B82F6', online: true, group: true },
-};
-const CHATS_INIT = [
-  { id: 'sam', last: 'Sending the mockups now 🚀', time: '14:02', unread: 2 },
-  { id: 'team', last: 'Lena: can we move standup to 10?', time: '13:40', unread: 5 },
-  { id: 'lena', last: 'Perfect, see you there', time: '12:15', unread: 0 },
-  { id: 'noah', last: 'You: thanks for the review!', time: 'Mon', unread: 0 },
-  { id: 'ava', last: 'Voice message · 0:42', time: 'Sun', unread: 0 },
-];
-const THREAD_INIT = [
-  { id: 1, me: false, text: 'Hey! Did you get a chance to look at the onboarding flow?', time: '13:48' },
-  { id: 2, me: true, text: 'Yes, went through it this morning. The step 3 copy is a bit long.', time: '13:51' },
-  { id: 3, me: false, text: 'Agreed. I will tighten it and send the mockups.', time: '13:55' },
-  { id: 4, me: false, text: 'Sending the mockups now 🚀', time: '14:02' },
-];
-const Store = createContext(null);
-
-function ChatsScreen({ nav }) {
-  const t = useT();
-  const { chats } = useContext(Store);
-  const [q, setQ] = useState('');
-  const list = chats.filter((c) => PEOPLE[c.id].name.toLowerCase().includes(q.toLowerCase()));
-  return (
-    <Scroll pad={0}>
-      <Header kicker={chats.reduce((a, c) => a + c.unread, 0) + ' unread'} title="Messages" right={<Button label="New" icon="SquarePen" small onPress={() => {}} />} />
-      <View style={{ paddingHorizontal: 20 }}>
-        <SearchBar placeholder="Search" value={q} onChange={setQ} />
-        <Scroll horizontal pad={0} contentStyle={{ gap: 14, paddingVertical: 16, paddingRight: 20 }}>
-          {Object.keys(PEOPLE).filter((k) => PEOPLE[k].online).map((k) => (
-            <Pressable key={k} onPress={() => nav.push('thread', { id: k })} style={{ alignItems: 'center', width: 64 }}>
-              <View><Avatar name={PEOPLE[k].name} color={PEOPLE[k].c} size={56} /><View style={{ position: 'absolute', right: 1, bottom: 1, width: 14, height: 14, borderRadius: 7, backgroundColor: t.success, borderWidth: 2, borderColor: t.bg }} /></View>
-              <Text style={[T.caption, { color: t.text2, marginTop: 6 }]} numberOfLines={1}>{PEOPLE[k].name.split(' ')[0]}</Text>
-            </Pressable>
-          ))}
-        </Scroll>
-        <Group>
-          {list.map((c) => {
-            const p = PEOPLE[c.id];
-            return <Row key={c.id} leading={<Avatar name={p.name} color={p.c} size={48} />} title={p.name} subtitle={c.last} titleStyle={c.unread ? { fontWeight: '700' } : null} right={<View style={{ alignItems: 'flex-end', gap: 6 }}><Text style={[T.caption, { color: c.unread ? ACCENT : t.text3 }]}>{c.time}</Text>{c.unread ? <View style={{ minWidth: 20, height: 20, borderRadius: 10, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}><Text style={[T.caption2, { color: '#fff' }]}>{c.unread}</Text></View> : null}</View>} onPress={() => nav.push('thread', { id: c.id })} pad={10} />;
-          })}
-        </Group>
-      </View>
-    </Scroll>
-  );
+type AppName='Phone'|'Messages'|'Safari'|'YouTube'|'KakaoTalk'|'Spotify'|'Camera'|'Photos'|'Calendar'|'Clock'|'Weather'|'Maps'|'Notes'|'Contacts'|'Mail'|'Settings';
+const BLUE='#087EFF';
+const apps:{id:AppName;label:string;icon:any;color:string}[]=[
+{id:'Phone',label:'전화',icon:'call',color:'#34C759'},{id:'Messages',label:'메시지',icon:'chatbubble',color:'#32D74B'},{id:'Safari',label:'Safari',icon:'compass',color:'#E8F4FF'},{id:'Camera',label:'카메라',icon:'camera',color:'#424248'},
+{id:'Photos',label:'사진',icon:'aperture',color:'#FFFFFF'},{id:'Calendar',label:'캘린더',icon:'calendar',color:'#FFFFFF'},{id:'Clock',label:'시계',icon:'time',color:'#17171B'},{id:'Weather',label:'날씨',icon:'partly-sunny',color:'#4CA8FF'},
+{id:'Maps',label:'지도',icon:'map',color:'#FFFFFF'},{id:'Notes',label:'메모',icon:'document-text',color:'#FFE45C'},{id:'Contacts',label:'연락처',icon:'person',color:'#F5F5F7'},{id:'Mail',label:'메일',icon:'mail',color:'#1689FF'},
+{id:'YouTube',label:'YouTube',icon:'logo-youtube',color:'#FF0033'},{id:'KakaoTalk',label:'카카오톡',icon:'chatbubble-ellipses',color:'#FEE500'},{id:'Spotify',label:'Spotify',icon:'musical-notes',color:'#1ED760'},{id:'Settings',label:'설정',icon:'settings',color:'#8E8E93'}];
+type Chat={id:number;name:string;preview:string;time:string;unread:number;color:string};
+type Msg={id:number;from:'me'|'them';text:string;time:string};
+const initial:Chat[]=[{id:1,name:'민서',preview:'오늘 몇 시에 만날까?',time:'오후 2:18',unread:2,color:'#D6A9C4'},{id:2,name:'가족',preview:'사진 보내 줘',time:'오후 1:42',unread:0,color:'#D9B38C'},{id:3,name:'지우',preview:'확인했어. 고마워!',time:'어제',unread:0,color:'#91AEDD'},{id:4,name:'학교 단체방',preview:'서연: 과제 파일 올렸어',time:'어제',unread:4,color:'#B5A0E3'}];
+const timeNow=()=>new Date().toLocaleTimeString('ko-KR',{hour:'numeric',minute:'2-digit'});
+function Icon({name,color='#fff',size=24}:{name:any;color?:string;size?:number}){return <Ionicons name={name} color={color} size={size}/>;}
+function Tile({item,onPress}:{item:typeof apps[number];onPress:()=>void}){const c=['Safari','Photos','Calendar','Contacts'].includes(item.id)?(item.id==='Safari'?'#168BFF':item.id==='Calendar'?'#FF3B30':item.id==='Contacts'?'#3478F6':'#F04F68'):item.id==='KakaoTalk'?'#241F00':'#fff';return <Pressable onPress={onPress} style={st.tile}><View style={[st.appIcon,{backgroundColor:item.color}]}>{item.id==='Calendar'?<View style={st.calendar}><Text style={{color:'#FF3B30',fontSize:9,fontWeight:'700'}}>일요일</Text><Text style={{color:'#17171B',fontSize:24}}>{new Date().getDate()}</Text></View>:<Icon name={item.icon} color={c} size={31}/>}</View><Text style={st.appLabel}>{item.label}</Text></Pressable>}
+export default function App(){
+ const [active,setActive]=useState<AppName|null>(null),[chatId,setChatId]=useState<number|null>(null),[chats,setChats]=useState(initial);
+ const [threads,setThreads]=useState<Record<number,Msg[]>>({1:[{id:1,from:'them',text:'지금 뭐 해?',time:'오후 2:12'},{id:2,from:'me',text:'집에서 준비하고 있어.',time:'오후 2:14'},{id:3,from:'them',text:'오늘 몇 시에 만날까?',time:'오후 2:18'}],2:[{id:1,from:'them',text:'주말에 다 같이 저녁 먹자.',time:'오후 1:30'}],3:[{id:1,from:'them',text:'자료 보내 줘서 고마워.',time:'어제'}],4:[{id:1,from:'them',text:'과제 파일 올렸어.',time:'어제'}]});
+ const [draft,setDraft]=useState(''),[search,setSearch]=useState(''),[query,setQuery]=useState(''),[result,setResult]=useState(''),[playing,setPlaying]=useState(false);
+ const [notes,setNotes]=useState([{id:1,title:'아이디어',body:'오늘 해야 할 일 정리하기'},{id:2,title:'메모',body:'잊지 말고 챙기기'}]),[editId,setEditId]=useState<number|null>(null),[noteTitle,setNoteTitle]=useState(''),[noteBody,setNoteBody]=useState('');
+ const [contacts,setContacts]=useState(['민서','가족','지우','서연']),[newContact,setNewContact]=useState(''),[dark,setDark]=useState(false),[wifi,setWifi]=useState(true),[bt,setBt]=useState(true);
+ const [history,setHistory]=useState<string[]>([]);
+ const bg=dark?'#000':'#F2F2F7',fg=dark?'#fff':'#111114',card=dark?'#1C1C1E':'#fff',muted=dark?'#9A9AA3':'#777780';
+ const back=()=>{if(chatId!==null){setChatId(null);setDraft('')}else{setActive(null);setSearch('');setResult('')}};
+ const send=()=>{if(!draft.trim()||chatId===null)return;const txt=draft.trim(),m={id:Date.now(),from:'me' as const,text:txt,time:timeNow()};setThreads(p=>({...p,[chatId]:[...(p[chatId]||[]),m]}));setChats(p=>p.map(c=>c.id===chatId?{...c,preview:txt,time:'지금',unread:0}:c));setDraft('')};
+ const createChat=()=>{if(!search.trim())return;const id=Date.now(),name=search.trim();setChats(p=>[{id,name,preview:'새로운 대화',time:'지금',unread:0,color:'#91AEDD'},...p]);setThreads(p=>({...p,[id]:[]}));setChatId(id);setSearch('')};
+ const header=(title:string,right?:React.ReactNode)=><View style={[st.header,{borderBottomColor:dark?'#2C2C2E':'#D9D9DE'}]}><Pressable onPress={back} style={{width:42}}><Icon name="chevron-back" color={BLUE} size={27}/></Pressable><Text style={[st.headerTitle,{color:fg}]}>{title}</Text><View style={{width:42,alignItems:'flex-end'}}>{right}</View></View>;
+ const setting=(icon:string,title:string,sub:string,onPress?:()=>void)=><Pressable onPress={onPress} style={[st.settingRow,{backgroundColor:card}]}><Icon name={icon} color={BLUE} size={21}/><View style={{flex:1,marginLeft:12}}><Text style={{color:fg,fontSize:16}}>{title}</Text>{!!sub&&<Text style={{color:muted,fontSize:12,marginTop:3}}>{sub}</Text>}</View><Icon name="chevron-forward" color={muted} size={17}/></Pressable>;
+ const open=(id:AppName)=>{setActive(id);setChatId(null);setSearch('');setQuery('');setResult('')};
+ const render=()=>{
+ if(!active)return null;
+ if(active==='Messages'||active==='KakaoTalk'){
+  const kakao=active==='KakaoTalk',chat=chats.find(c=>c.id===chatId);
+  if(chatId!==null)return <View style={{flex:1,backgroundColor:card}}>{header(chat?.name||'메시지',<Icon name="call-outline" color={BLUE} size={21}/>)}<View style={{alignItems:'center',padding:12}}><View style={[st.avatar,{backgroundColor:chat?.color||'#91AEDD'}]}><Text style={{color:'#fff',fontSize:21}}>{chat?.name.slice(0,1)}</Text></View><Text style={{color:fg,fontWeight:'600',marginTop:5}}>{chat?.name}</Text><Text style={{color:muted,fontSize:11,marginTop:3}}>{kakao?'카카오톡':'iMessage'}</Text></View><ScrollView style={{flex:1,paddingHorizontal:14}} contentContainerStyle={{paddingVertical:10}}>{(threads[chatId]||[]).map(m=><View key={m.id} style={{alignSelf:m.from==='me'?'flex-end':'flex-start',maxWidth:'82%',marginVertical:4}}><View style={[st.bubble,{backgroundColor:m.from==='me'?(kakao?'#FEE500':BLUE):dark?'#303034':kakao?'#fff':'#E9E9EB',borderBottomRightRadius:m.from==='me'?5:19,borderBottomLeftRadius:m.from==='me'?19:5}]}><Text style={{color:m.from==='me'&& !kakao?'#fff':fg,fontSize:16,lineHeight:21}}>{m.text}</Text></View><Text style={{color:muted,fontSize:10,marginTop:3,alignSelf:m.from==='me'?'flex-end':'flex-start'}}>{m.time}</Text></View>)}</ScrollView><KeyboardAvoidingView behavior={Platform.OS==='ios'?'padding':undefined}><View style={[st.composer,{borderTopColor:dark?'#2C2C2E':'#E5E5EA'}]}><Pressable style={st.plus}><Icon name="add" color={BLUE} size={23}/></Pressable><TextInput value={draft} onChangeText={setDraft} placeholder={kakao?'메시지 입력':'iMessage'} placeholderTextColor={muted} style={[st.input,{color:fg,backgroundColor:bg}]} onSubmitEditing={send}/><Pressable onPress={send} style={[st.send,{backgroundColor:kakao?'#FEE500':BLUE}]}><Icon name="arrow-up" color={kakao?'#241F00':'#fff'} size={19}/></Pressable></View></KeyboardAvoidingView></View>;
+  return <View style={{flex:1,backgroundColor:kakao?'#F7F7F7':bg}}><View style={st.messagesHeader}><Text style={[st.largeTitle,{color:kakao?'#191919':fg}]}>{kakao?'채팅':'메시지'}</Text><Pressable onPress={()=>setChatId(-1)}><Icon name="create-outline" color={kakao?'#191919':BLUE} size={25}/></Pressable></View><View style={{paddingHorizontal:16,paddingBottom:8}}><View style={[st.search,{backgroundColor:kakao?'#E8E8E8':dark?'#1C1C1E':'#E3E3E8'}]}><Icon name="search" color={muted} size={17}/><TextInput value={search} onChangeText={setSearch} placeholder="검색" placeholderTextColor={muted} style={{flex:1,color:fg,paddingVertical:6}}/></View></View>{chatId===-1?<View style={{padding:18}}><Text style={{color:fg,fontSize:20,fontWeight:'600',marginBottom:12}}>새 대화</Text><TextInput value={search} onChangeText={setSearch} placeholder="이름 또는 그룹 이름" placeholderTextColor={muted} style={[st.input,{backgroundColor:card,color:fg,marginBottom:12}]}/><Pressable onPress={createChat} style={st.primary}><Text style={{color:'#fff',fontWeight:'600'}}>대화 시작</Text></Pressable><Pressable onPress={()=>setChatId(null)} style={{padding:12,alignItems:'center'}}><Text style={{color:BLUE}}>취소</Text></Pressable></View>:<ScrollView>{chats.filter(c=>(c.name+c.preview).toLowerCase().includes(search.toLowerCase())).map(c=><Pressable key={c.id} onPress={()=>{setChatId(c.id);setChats(p=>p.map(x=>x.id===c.id?{...x,unread:0}:x))}} style={[st.chatRow,{borderBottomColor:kakao?'#EAEAEA':dark?'#2C2C2E':'#E2E2E7'}]}><View style={[st.avatar,{backgroundColor:c.color,borderRadius:kakao?13:24}]}><Text style={{color:'#fff',fontSize:20,fontWeight:'600'}}>{c.name.slice(0,1)}</Text></View><View style={{flex:1,marginLeft:12}}><View style={{flexDirection:'row',justifyContent:'space-between'}}><Text style={{color:kakao?'#191919':fg,fontSize:16,fontWeight:c.unread?'600':'500'}}>{c.name}</Text><Text style={{color:muted,fontSize:11}}>{c.time}</Text></View><Text numberOfLines={1} style={{color:muted,fontSize:13,marginTop:4}}>{c.preview}</Text></View>{c.unread>0&&<View style={st.unread}><Text style={{color:'#fff',fontSize:11}}>{c.unread}</Text></View>}</Pressable>)}</ScrollView>}</View>
+ }
+ if(active==='Notes'){
+  if(editId!==null)return <View style={{flex:1,backgroundColor:bg}}>{header('메모 편집',<Pressable onPress={()=>{const n={id:editId===-1?Date.now():editId,title:noteTitle||'새로운 메모',body:noteBody};setNotes(p=>editId===-1?[n,...p]:p.map(x=>x.id===n.id?n:x));setEditId(null)}}><Text style={{color:BLUE,fontWeight:'600'}}>완료</Text></Pressable>)}<TextInput value={noteTitle} onChangeText={setNoteTitle} placeholder="제목" placeholderTextColor={muted} style={{fontSize:24,fontWeight:'700',color:fg,padding:18}}/><TextInput value={noteBody} onChangeText={setNoteBody} multiline placeholder="메모를 입력하세요" placeholderTextColor={muted} style={{flex:1,textAlignVertical:'top',fontSize:16,color:fg,paddingHorizontal:18}}/></View>;
+  return <View style={{flex:1,backgroundColor:bg}}><View style={st.messagesHeader}><Text style={[st.largeTitle,{color:fg}]}>메모</Text><Pressable onPress={()=>{setNoteTitle('');setNoteBody('');setEditId(-1)}}><Icon name="create-outline" color={BLUE} size={25}/></Pressable></View><ScrollView>{notes.map(n=><Pressable key={n.id} onPress={()=>{setNoteTitle(n.title);setNoteBody(n.body);setEditId(n.id)}} onLongPress={()=>setNotes(p=>p.filter(x=>x.id!==n.id))} style={{padding:17,borderBottomWidth:StyleSheet.hairlineWidth,borderBottomColor:'#D6D6DC'}}><Text style={{color:fg,fontSize:17,fontWeight:'600'}}>{n.title}</Text><Text style={{color:muted,fontSize:12,marginTop:4}}>{n.body}</Text></Pressable>)}</ScrollView></View>
+ }
+ if(active==='Safari')return <View style={{flex:1,backgroundColor:'#fff'}}>{header('Safari',<Icon name="ellipsis-horizontal" color={BLUE} size={22}/>)}<View style={{alignItems:'center',paddingTop:60,paddingHorizontal:22}}><Text style={{fontSize:43,fontWeight:'700',color:'#4285F4',letterSpacing:-2}}>Google</Text><View style={[st.search,{backgroundColor:'#fff',borderWidth:1,borderColor:'#DADCE0',borderRadius:25,marginTop:25,height:48}]}><Icon name="search" color="#5F6368" size={18}/><TextInput value={query} onChangeText={setQuery} onSubmitEditing={()=>{setResult(query);setHistory(p=>[query,...p.filter(x=>x!==query)].slice(0,6)}} placeholder="Google 검색" placeholderTextColor="#777" style={{flex:1,color:'#202124'}}/></View><Pressable onPress={()=>{setResult(query);if(query.trim())setHistory(p=>[query,...p.filter(x=>x!==query)].slice(0,6))}} style={[st.primary,{backgroundColor:'#F8F9FA',marginTop:15}]}><Text style={{color:'#202124'}}>Google 검색</Text></Pressable>{result?<View style={{alignSelf:'stretch',marginTop:25}}><Text style={{color:'#202124',fontSize:17,fontWeight:'600'}}>검색 결과: {result}</Text><Text style={{color:'#5F6368',marginTop:10}}>시뮬레이터 예시 검색 결과</Text><Text style={{color:'#1A0DAB',marginTop:18}}>{result} - 개요</Text></View>:<View style={{alignSelf:'stretch',marginTop:30}}><Text style={{color:'#5F6368',fontSize:13,marginBottom:12}}>최근 검색</Text>{history.map(h=><Pressable key={h} onPress={()=>{setQuery(h);setResult(h)}} style={{paddingVertical:8,flexDirection:'row',gap:10}}><Icon name="time-outline" color="#777" size={17}/><Text style={{color:'#202124'}}>{h}</Text></Pressable>)}</View>}</View></View>;
+ if(active==='YouTube')return <View style={{flex:1,backgroundColor:'#fff'}}>{header('YouTube',<Icon name="person-circle-outline" color="#222" size={24}/>)}<View style={{paddingHorizontal:14}}><View style={[st.search,{backgroundColor:'#F1F1F1'}]}><Icon name="search" color="#222" size={18}/><TextInput value={query} onChangeText={setQuery} onSubmitEditing={()=>setResult(query)} placeholder="YouTube 검색" placeholderTextColor="#777" style={{flex:1,color:'#111'}}/></View><Pressable onPress={()=>setResult(query)} style={{padding:10,alignSelf:'flex-end'}}><Text style={{color:BLUE}}>검색</Text></Pressable></View><ScrollView>{(result?[result+' 관련 영상',result+' 추천 영상']:['인기 동영상','오늘의 브이로그','음악 플레이리스트']).map((v,i)=><Pressable key={v} onPress={()=>setPlaying(!playing)} style={{marginBottom:20}}><View style={{height:185,backgroundColor:['#333B4A','#6A4B4B','#344C44'][i%3],alignItems:'center',justifyContent:'center'}}><Icon name={playing?'pause':'play'} size={44}/></View><View style={{padding:12,flexDirection:'row',gap:10}}><View style={[st.avatar,{backgroundColor:'#B7A1E8'}]}/><View style={{flex:1}}><Text style={{color:'#111',fontWeight:'600',fontSize:15}}>{v}</Text><Text style={{color:'#666',fontSize:12,marginTop:4}}>시뮬레이터 채널 · 조회수 12만회 · 2일 전</Text></View></View></Pressable>)}</ScrollView></View>;
+ if(active==='Spotify')return <View style={{flex:1,backgroundColor:'#121212'}}>{header('Spotify',<Icon name="settings-outline" color="#1ED760" size={22}/>)}<ScrollView style={{padding:18}}><Text style={{color:'#fff',fontSize:28,fontWeight:'700',marginBottom:18}}>좋은 아침이에요</Text><View style={{flexDirection:'row',gap:10}}>{['좋아요 표시한 곡','나만의 플레이리스트'].map((v,i)=><View key={v} style={{backgroundColor:'#282828',flex:1,padding:12,borderRadius:6}}><View style={{height:100,backgroundColor:i?'#6655AA':'#1ED760',alignItems:'center',justifyContent:'center',borderRadius:4}}><Icon name="musical-notes" color={i?'#fff':'#111'} size={32}/></View><Text style={{color:'#fff',fontWeight:'600',marginTop:9}}>{v}</Text></View>)}</View><Text style={{color:'#fff',fontSize:22,fontWeight:'700',marginTop:26,marginBottom:12}}>최근 재생</Text>{['Daily Mix','집중할 때 듣는 음악','오늘의 추천'].map((v,i)=><Pressable key={v} onPress={()=>setPlaying(!playing)} style={{flexDirection:'row',alignItems:'center',paddingVertical:10}}><View style={{width:54,height:54,backgroundColor:['#1ED760','#6655AA','#B84A4A'][i],alignItems:'center',justifyContent:'center'}}><Icon name="musical-notes" size={22}/></View><View style={{marginLeft:12,flex:1}}><Text style={{color:'#fff',fontWeight:'600'}}>{v}</Text><Text style={{color:'#AAA',fontSize:12,marginTop:4}}>플레이리스트</Text></View><Icon name={playing?'pause-circle':'play-circle'} color="#1ED760" size={31}/></Pressable>)}</ScrollView><View style={{backgroundColor:'#282828',padding:12,flexDirection:'row',alignItems:'center'}}><View style={{flex:1}}><Text style={{color:'#fff',fontSize:13}}>오늘의 추천</Text><Text style={{color:'#aaa',fontSize:11}}>시뮬레이터 미리 듣기</Text></View><Pressable onPress={()=>setPlaying(!playing)}><Icon name={playing?'pause':'play'} size={24}/></Pressable></View></View>;
+ if(active==='Settings')return <View style={{flex:1,backgroundColor:bg}}><View style={st.messagesHeader}><Text style={[st.largeTitle,{color:fg}]}>설정</Text></View><ScrollView contentContainerStyle={{padding:16}}><View style={[st.profile,{backgroundColor:card}]}><View style={st.avatar}><Icon name="person" size={25}/></View><View style={{marginLeft:12}}><Text style={{color:fg,fontSize:18,fontWeight:'600'}}>iPhone 사용자</Text><Text style={{color:muted,fontSize:12,marginTop:3}}>Apple 계정, iCloud 등</Text></View></View><Text style={[st.section,{color:muted}]}>연결</Text>{setting('wifi','Wi-Fi',wifi?'연결됨':'끔',()=>setWifi(!wifi))}{setting('bluetooth','Bluetooth',bt?'켬':'끔',()=>setBt(!bt))}{setting('airplane','에어플레인 모드','끔')}{setting('notifications','알림','앱별 알림 설정')}{setting('moon','디스플레이 및 밝기',dark?'다크 모드':'라이트 모드',()=>setDark(!dark))}{setting('battery-half','배터리','100%')}{setting('shield-checkmark','개인정보 보호 및 보안','')}{setting('settings','일반','정보, 소프트웨어 업데이트')}</ScrollView></View>;
+ const title:Record<AppName,string>={Phone:'전화',Messages:'메시지',Safari:'Safari',YouTube:'YouTube',KakaoTalk:'카카오톡',Spotify:'Spotify',Camera:'카메라',Photos:'사진',Calendar:'캘린더',Clock:'시계',Weather:'날씨',Maps:'지도',Notes:'메모',Contacts:'연락처',Mail:'메일',Settings:'설정'};
+ if(active==='Contacts')return <View style={{flex:1,backgroundColor:bg}}>{header('연락처',<Pressable onPress={()=>{if(newContact.trim()){setContacts(p=>[newContact.trim(),...p]);setNewContact('')}}><Icon name="add-circle" color={BLUE} size={25}/></Pressable>)}><View style={{padding:14}}><TextInput value={newContact} onChangeText={setNewContact} placeholder="새 연락처 이름 입력 후 + 선택" placeholderTextColor={muted} style={[st.input,{backgroundColor:card,color:fg}]}/></View><ScrollView>{contacts.map(c=><View key={c} style={st.callRow}><View style={st.avatar}><Icon name="person" size={22}/></View><Text style={{color:fg,marginLeft:12}}>{c}</Text></View>)}</ScrollView></View>;
+ if(active==='Phone')return <View style={{flex:1,backgroundColor:bg}}>{header('최근 통화')}<ScrollView style={{padding:18}}><Text style={[st.largeTitle,{color:fg}]}>즐겨찾기</Text>{contacts.slice(0,3).map(c=><View key={c} style={[st.callRow,{backgroundColor:card,padding:12,borderRadius:12}]}><View style={st.avatar}><Icon name="person" size={22}/></View><Text style={{color:fg,marginLeft:12,flex:1}}>{c}</Text><Icon name="call" color="#34C759" size={21}/></View>)}<Text style={[st.section,{color:fg}]}>최근 통화</Text>{contacts.map(c=><View key={c} style={st.callRow}><Icon name="call-outline" color="#34C759" size={18}/><Text style={{color:fg,marginLeft:12,flex:1}}>{c}</Text><Text style={{color:muted,fontSize:12}}>오늘</Text></View>)}</ScrollView></View>;
+ const description:Record<AppName,string>={Camera:'카메라 미리보기',Photos:'최근 사진',Calendar:'오늘의 일정',Clock:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),Weather:'서울 · 맑음 · 18°',Maps:'지도 미리보기',Mail:'받은 편지함',Phone:'전화',Messages:'메시지',Safari:'Safari',YouTube:'YouTube',KakaoTalk:'카카오톡',Spotify:'Spotify',Notes:'메모',Contacts:'연락처',Settings:'설정'};
+ return <View style={{flex:1,backgroundColor:bg}}>{header(title[active])}<View style={{flex:1,alignItems:'center',justifyContent:'center',padding:28}}><View style={{width:150,height:150,borderRadius:34,backgroundColor:apps.find(a=>a.id===active)?.color,alignItems:'center',justifyContent:'center',marginBottom:22}}><Icon name={apps.find(a=>a.id===active)?.icon} size={64} color={active==='Calendar'?'#FF3B30':'#fff'}/></View><Text style={{color:fg,fontSize:25,fontWeight:'700'}}>{description[active]}</Text><Text style={{color:muted,fontSize:14,textAlign:'center',marginTop:10,lineHeight:21}}>iPhone 스타일 시뮬레이터 미리보기</Text>{active==='Photos'&&<View style={{flexDirection:'row',gap:8,marginTop:20}}>{['#E5B8A7','#9EB8D6','#B5C8A7'].map(c=><View key={c} style={{width:78,height:100,backgroundColor:c,borderRadius:10}}/>)}</View>}{active==='Camera'&&<Pressable onPress={()=>setResult('촬영됨')} style={[st.primary,{marginTop:24}]}><Text style={{color:'#fff'}}>셔터</Text></Pressable>}{active==='Mail'&&setting('tray','받은 편지함','새로운 메일이 없습니다.')}</View></View>;
+ };
+ return <SafeAreaView style={[st.safe,{backgroundColor:active==='Spotify'?'#121212':active==='KakaoTalk'?'#F7F7F7':bg}]}><StatusBar barStyle={active==='Spotify'?'light-content':dark?'light-content':'dark-content'}/>{active?render():<View style={st.home}><View style={st.status}><Text style={st.statusText}>{timeNow()}</Text><View style={{flexDirection:'row',alignItems:'center',gap:5}}><Icon name="wifi" size={14}/><Icon name="cellular" size={14}/><Icon name="battery-full" size={18}/></View></View><View style={st.island}/><View style={{paddingHorizontal:13,paddingTop:18}}><View style={st.widget}><Text style={{color:'#fff',fontSize:13,fontWeight:'600'}}>서울</Text><Text style={{color:'#fff',fontSize:31,fontWeight:'300',marginTop:4}}>18°</Text><Text style={{color:'#fff',fontSize:12}}>대체로 맑음</Text><Icon name="partly-sunny" color="#FFD66B" size={26}/></View></View><View style={st.grid}>{apps.map(item=><Tile key={item.id} item={item} onPress={()=>open(item.id)}/>)}</View><View style={st.dock}>{(['Phone','Messages','Safari','Spotify'] as AppName[]).map(id=>{const item=apps.find(a=>a.id===id)!;return <Pressable key={id} onPress={()=>open(id)} style={[st.dockIcon,{backgroundColor:item.color}]}><Icon name={item.icon} size={29} color={id==='Safari'?'#168BFF':'#fff'}/></Pressable>})}</View></View>}</SafeAreaView>
 }
-
-function CallsScreen() {
-  const t = useT();
-  const calls = [['lena', 'Outgoing · 12 min', 'PhoneOutgoing', t.text2], ['sam', 'Missed', 'PhoneMissed', t.danger], ['team', 'Video · 48 min', 'Video', t.text2], ['noah', 'Incoming · 4 min', 'PhoneIncoming', t.text2]];
-  return (
-    <Scroll pad={0}>
-      <Header kicker="Recent" title="Calls" right={<Icon name="Phone" size={24} />} />
-      <View style={{ paddingHorizontal: 20 }}>
-        <Group>
-          {calls.map((c, i) => <Row key={i} leading={<Avatar name={PEOPLE[c[0]].name} color={PEOPLE[c[0]].c} size={44} />} title={PEOPLE[c[0]].name} subtitle={c[1]} right={<Icon name={c[2]} size={20} color={c[3]} />} onPress={() => {}} />)}
-        </Group>
-      </View>
-    </Scroll>
-  );
-}
-
-function SettingsScreen() {
-  const t = useT();
-  const [read, setRead] = useState(true);
-  return (
-    <Scroll pad={0}>
-      <Header kicker="You" title="Settings" />
-      <View style={{ paddingHorizontal: 20 }}>
-        <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <Avatar name="Maya Kovacs" color={ACCENT} size={56} />
-          <View style={{ flex: 1 }}><Text style={[T.headline, { color: t.text }]}>Maya Kovacs</Text><Text style={[T.footnote, { color: t.text2 }]}>Building things · she/her</Text></View>
-          <Icon name="ChevronRight" size={18} color={t.text3} />
-        </Card>
-        <SectionTitle title="Privacy" />
-        <Group>
-          <Row icon="CheckCheck" title="Read receipts" right={<Toggle value={read} onChange={setRead} />} />
-          <Row icon="Lock" title="End to end encryption" subtitle="On for all chats" right={<Icon name="Check" size={18} color={t.success} />} />
-          <Row icon="Clock" title="Disappearing messages" value="Off" chevron onPress={() => {}} />
-        </Group>
-        <SectionTitle title="Notifications" />
-        <Group>
-          <Row icon="Bell" title="Message previews" right={<Toggle value onChange={() => {}} />} />
-          <Row icon="Moon" title="Quiet hours" value="22:00 to 08:00" chevron onPress={() => {}} />
-        </Group>
-      </View>
-    </Scroll>
-  );
-}
-
-function Bubble({ m, color }) {
-  const t = useT();
-  return (
-    <View style={{ alignItems: m.me ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
-      <View style={{ maxWidth: '78%', backgroundColor: m.me ? ACCENT : t.card, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderBottomRightRadius: m.me ? 6 : 20, borderBottomLeftRadius: m.me ? 20 : 6 }}>
-        <Text style={[T.body, { color: m.me ? '#fff' : t.text }]}>{m.text}</Text>
-      </View>
-      <Text style={[T.caption2, { color: t.text3, marginTop: 3, marginHorizontal: 6 }]}>{m.time}</Text>
-    </View>
-  );
-}
-
-function Thread({ nav, params }) {
-  const t = useT();
-  const { thread, send } = useContext(Store);
-  const p = PEOPLE[params.id] || PEOPLE.sam;
-  const [draft, setDraft] = useState('');
-  return (
-    <Screen>
-      <NavBar title={p.name} onBack={nav.pop} right={<Icon name="Phone" size={20} />} />
-      <View style={{ alignItems: 'center', marginTop: -6, marginBottom: 8 }}><Text style={[T.caption, { color: p.online ? t.success : t.text3 }]}>{p.online ? 'Online now' : 'Last seen today'}</Text></View>
-      <Scroll pad={20}>
-        <View style={{ alignItems: 'center', marginVertical: 14 }}><Pill label="Today" color={t.text2} small /></View>
-        {thread.map((m) => <Bubble key={m.id} m={m} />)}
-      </Scroll>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 34, borderTopWidth: 1, borderTopColor: t.line, backgroundColor: t.bg }}>
-        <Pressable style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: t.card, alignItems: 'center', justifyContent: 'center' }}><Icon name="Plus" size={20} /></Pressable>
-        <View style={{ flex: 1, height: 40, borderRadius: 20, backgroundColor: t.card, paddingHorizontal: 14, justifyContent: 'center' }}>
-          <TextInput value={draft} onChangeText={setDraft} placeholder="Message" placeholderTextColor={t.text3} style={[T.body, { color: t.text, paddingVertical: 0 }]} />
-        </View>
-        <Pressable onPress={() => { send(draft || 'Looks great, thank you!'); setDraft(''); }} style={({ pressed }) => [{ width: 38, height: 38, borderRadius: 19, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' }, pressed && { opacity: 0.7 }]}><Icon name="ArrowUp" size={20} color="#fff" strokeWidth={2.6} /></Pressable>
-      </View>
-    </Screen>
-  );
-}
-
-function Root({ nav }) {
-  const [tab, setTab] = useState('chats');
-  return (
-    <Screen>
-      <Tabs active={tab} screens={{ chats: <ChatsScreen nav={nav} />, calls: <CallsScreen />, settings: <SettingsScreen /> }} />
-      <TabBar active={tab} onChange={setTab} tabs={[
-        { key: 'chats', label: 'Chats', icon: 'MessageCircle' },
-        { key: 'calls', label: 'Calls', icon: 'Phone' },
-        { key: 'settings', label: 'Settings', icon: 'Settings' },
-      ]} />
-    </Screen>
-  );
-}
-const SCREENS = { root: Root, thread: Thread };
-
-export default function App() {
-  const [chats, setChats] = useState(CHATS_INIT);
-  const [thread, setThread] = useState(THREAD_INIT);
-  const send = (text) => { setThread((th) => [...th, { id: Date.now(), me: true, text, time: 'now' }]); setChats((cs) => cs.map((c) => (c.id === 'sam' ? Object.assign({}, c, { last: 'You: ' + text, unread: 0, time: 'now' }) : c))); };
-  return (
-    <ThemeProvider accent={ACCENT} overrides={THEME}>
-      <Store.Provider value={{ chats, thread, send }}>
-        <Stack screens={SCREENS} initial="root" />
-      </Store.Provider>
-    </ThemeProvider>
-  );
-}
+const st=StyleSheet.create({safe:{flex:1},home:{flex:1,backgroundColor:'#697D91'},status:{height:30,paddingHorizontal:27,flexDirection:'row',alignItems:'center',justifyContent:'space-between'},statusText:{color:'#fff',fontSize:14,fontWeight:'700'},island:{alignSelf:'center',width:116,height:34,borderRadius:20,backgroundColor:'#000',marginTop:-26},widget:{height:118,borderRadius:22,backgroundColor:'rgba(29,45,61,0.58)',padding:14,overflow:'hidden'},grid:{flex:1,flexDirection:'row',flexWrap:'wrap',justifyContent:'space-around',alignContent:'flex-start',paddingTop:20,paddingHorizontal:8},tile:{width:'23%',alignItems:'center',marginBottom:17},appIcon:{width:58,height:58,borderRadius:14,alignItems:'center',justifyContent:'center',overflow:'hidden'},appLabel:{fontSize:11,color:'#fff',marginTop:5,textShadowColor:'rgba(0,0,0,0.5)',textShadowRadius:4},calendar:{...StyleSheet.absoluteFillObject,backgroundColor:'#fff',alignItems:'center',justifyContent:'center'},dock:{marginHorizontal:12,marginBottom:8,height:82,borderRadius:28,backgroundColor:'rgba(235,239,243,0.34)',flexDirection:'row',alignItems:'center',justifyContent:'space-evenly'},dockIcon:{width:56,height:56,borderRadius:14,alignItems:'center',justifyContent:'center'},header:{height:54,flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:10,borderBottomWidth:StyleSheet.hairlineWidth},headerTitle:{fontSize:17,fontWeight:'600',flex:1,textAlign:'center'},messagesHeader:{height:58,paddingHorizontal:18,flexDirection:'row',alignItems:'center',justifyContent:'space-between'},largeTitle:{fontSize:32,fontWeight:'700',letterSpacing:-.7},search:{height:38,borderRadius:10,flexDirection:'row',alignItems:'center',gap:8,paddingHorizontal:10},avatar:{width:48,height:48,borderRadius:24,alignItems:'center',justifyContent:'center',backgroundColor:'#91AEDD'},chatRow:{minHeight:72,flexDirection:'row',alignItems:'center',paddingHorizontal:15,borderBottomWidth:StyleSheet.hairlineWidth},unread:{minWidth:20,height:20,paddingHorizontal:5,borderRadius:11,backgroundColor:BLUE,alignItems:'center',justifyContent:'center',marginLeft:8},bubble:{paddingHorizontal:13,paddingVertical:9,borderRadius:19},composer:{minHeight:62,paddingHorizontal:10,paddingVertical:8,flexDirection:'row',alignItems:'center',gap:8,borderTopWidth:StyleSheet.hairlineWidth},plus:{width:33,height:33,borderRadius:17,borderWidth:1,borderColor:'#D3D3D8',alignItems:'center',justifyContent:'center'},input:{flex:1,minHeight:38,borderRadius:20,paddingHorizontal:13,paddingVertical:7,fontSize:16},send:{width:31,height:31,borderRadius:16,alignItems:'center',justifyContent:'center'},primary:{height:42,borderRadius:10,backgroundColor:BLUE,alignItems:'center',justifyContent:'center',paddingHorizontal:16},settingRow:{minHeight:56,flexDirection:'row',alignItems:'center',paddingHorizontal:12,marginBottom:1,borderRadius:8,gap:10},section:{fontSize:13,fontWeight:'600',marginVertical:12,marginLeft:4},profile:{padding:16,borderRadius:14,flexDirection:'row',alignItems:'center',marginBottom:16},callRow:{flexDirection:'row',alignItems:'center',paddingVertical:12,borderBottomWidth:StyleSheet.hairlineWidth,borderBottomColor:'#D9D9DE',gap:8}});
