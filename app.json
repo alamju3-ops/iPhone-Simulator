@@ -1,12 +1,10 @@
 {
   "expo": {
-    "name": "Orbit — Messages",
-    "slug": "orbit-messages",
+    "name": "iPhone 16 Simulator",
+    "slug": "iphone-16-simulator",
     "version": "1.0.0",
     "orientation": "portrait",
-    "platforms": [
-      "ios"
-    ],
+    "platforms": ["ios", "android", "web"],
     "userInterfaceStyle": "automatic"
   }
 }
